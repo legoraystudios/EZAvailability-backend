@@ -16,4 +16,21 @@ async function hashPassword(password: any) {
     return hashedPassword;
 }
 
-module.exports = { hashPassword }
+function verifyPassword(password: any, hashedPassword: any) {
+
+  var result;
+
+  bcrypt.compare(password, hashedPassword,
+    async function (err: any, isMatch: any) {
+      if(!isMatch) {
+        return Promise.resolve(false)
+      } else {
+        return Promise.resolve(true)
+      }
+    })
+
+    return bcrypt.compare(password, hashedPassword);
+}
+
+
+module.exports = { hashPassword, verifyPassword }

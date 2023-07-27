@@ -3,7 +3,7 @@ const dotenv = require('dotenv')
 const moment = require('moment')
 const { check, validationResult } = require('express-validator')
 const database = require('../Controllers/DatabaseController')
-const { hashPassword } = require('../Controllers/Auth/AuthController')
+const { hashPassword, verifyPassword } = require('../Controllers/Auth/AuthController')
 const router = express.Router()
 
 dotenv.config({ path: '../.env' });
@@ -46,13 +46,15 @@ router.post('/login', loginValidator, (req: Request, res: Response) => {
       let email = req.body.email;
       let password = req.body.password;
 
-      database.query("SELECT * FROM ?? WHERE email = ?", [process.env.DB_ACCOUNTS_TABLE, email], (err: any, result: any) => {
+      database.query("SELECT * FROM ?? WHERE email = ?", [process.env.DB_ACCOUNTS_TABLE, email], async (err: any, result: any) => {
         if(err) {
           console.log(err);
         }
 
         if(result.length == 0) {
-          res.status(422).json({ errors: {msg: "Account not found in our records."} })
+          res.status(401).json({ errors: {msg: "Account not found in our records."} })
+        } else if(await verifyPassword(password, result[0]['hashed_passwd']) == false) {
+          res.status(401).json({ errors: {msg: "Invalid password."} })
         } else {
 
         }
