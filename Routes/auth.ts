@@ -3,7 +3,7 @@ const dotenv = require('dotenv')
 const moment = require('moment')
 const { check, validationResult } = require('express-validator')
 const database = require('../Controllers/DatabaseController')
-const { hashPassword, verifyPassword } = require('../Controllers/Auth/AuthController')
+const { hashPassword, verifyPassword, createToken, verifyToken } = require('../Controllers/Auth/AuthController')
 const router = express.Router()
 
 dotenv.config({ path: '../.env' });
@@ -56,7 +56,8 @@ router.post('/login', loginValidator, (req: Request, res: Response) => {
         } else if(await verifyPassword(password, result[0]['hashed_passwd']) == false) {
           res.status(401).json({ errors: {msg: "Invalid password."} })
         } else {
-
+          const token = createToken(email)
+          return res.json({ email, token, msg: "Login Success" });
         }
       })
 
