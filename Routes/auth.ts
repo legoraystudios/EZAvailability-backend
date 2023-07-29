@@ -57,7 +57,7 @@ router.post('/login', loginValidator, (req: Request, res: Response) => {
           res.status(401).json({ errors: {msg: "Invalid password."} })
         } else {
           const token = createToken(email)
-          return res.json({ email, token, msg: "Login Success" });
+          return res.json({ token, msg: "Login Success" });
         }
       })
 
