@@ -3,10 +3,14 @@ const dotenv = require('dotenv')
 const moment = require('moment')
 const { check, validationResult } = require('express-validator')
 const database = require('../Controllers/DatabaseController')
-const { hashPassword, verifyPassword, createToken, verifyToken } = require('../Controllers/Auth/AuthController')
+const cookieparser = require("cookie-parser")
+const { hashPassword, verifyPassword, createToken, verifyToken, createRefreshToken, decodeToken } = require('../Controllers/Auth/AuthController')
 const router = express.Router()
 
 dotenv.config({ path: '../.env' });
+
+const app = express()
+app.use(cookieparser())
 
 // Validations Array
 
@@ -39,7 +43,7 @@ router.post('/login', loginValidator, (req: Request, res: Response) => {
     const validatorError = validationResult(req)
 
     if (!validatorError.isEmpty()) {
-      res.status(422).json({ errors: validatorError.array() })
+      res.status(400).json({ errors: validatorError.array() })
       return;
     } else {
 
@@ -56,8 +60,15 @@ router.post('/login', loginValidator, (req: Request, res: Response) => {
         } else if(await verifyPassword(password, result[0]['hashed_passwd']) == false) {
           res.status(401).json({ errors: {msg: "Invalid password."} })
         } else {
+
+          // Setting up Access Token
           const token = createToken(email)
-          return res.json({ token, msg: "Login Success" });
+
+          // Setting up Refresh Token
+          res.cookie('session', token, { httpOnly: true, 
+            sameSite: 'none', secure: true, 
+            maxAge: 24 * 60 * 60 * 1000 });
+          return res.status(200).json({ token, msg: "Login Success" });
         }
       })
 
@@ -106,8 +117,19 @@ router.post('/register', registerValidator, async (req: Request, res: Response) 
 
   })
 
-router.post('/logout', (req, res) => {
-    res.send('Logout tab')
+router.post('/logout', verifyToken, (req, res) => {
+    if(!req.cookies.session) {
+      res.status(400).json({ msg: "No user to logout" })
+    } else {
+      res.clearCookie('session');
+      res.status(200).json({ msg: "Logged out successfully" })
+    }
 })
+
+
+router.post('/verifysession', verifyToken, (req, res) => {
+
+})
+
 
 module.exports = router

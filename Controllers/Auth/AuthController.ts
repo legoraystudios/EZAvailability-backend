@@ -38,13 +38,21 @@ function verifyPassword(password: any, hashedPassword: any) {
 function createToken(email: any) {
   const token = jwt.sign({ email }, 
     process.env.JWT_SECRET_TOKEN, {
-        expiresIn: 86400
+        expiresIn: '1d'
+    });
+    return token;
+}
+
+function createRefreshToken (email: any) {
+  const token = jwt.sign({ email }, 
+    process.env.JWT_REFRESH_TOKEN, {
+        expiresIn: '1d'
     });
     return token;
 }
 
 const verifyToken = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.body.token;
+  const token = req.cookies.session;
   if (!token) {
     return res.status(403).json({ errors: {msg: "Token Required, please log in again"} })
   }
@@ -56,13 +64,16 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
         return res.status(401).send({ msg: "Invalid Token"});
       }
   } catch (err) {
-    return res.status(401).json({ 
-        msg: "Invalid Token" 
-    });
+    console.log(err)
   }
   next();
 
 }
 
+function decodeToken(token: any) {
+  const decodedToken = jwt.verify(token, process.env.JWT_SECRET_TOKEN)
+  return decodedToken
+}
 
-module.exports = { hashPassword, verifyPassword, createToken, verifyToken }
+
+module.exports = { hashPassword, verifyPassword, createToken, verifyToken, createRefreshToken, decodeToken }
