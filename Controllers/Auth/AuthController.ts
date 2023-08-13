@@ -35,17 +35,9 @@ function verifyPassword(password: any, hashedPassword: any) {
     return bcrypt.compare(password, hashedPassword);
 }
 
-function createToken(email: any) {
-  const token = jwt.sign({ email }, 
+function createToken(email: any, role: any) {
+  const token = jwt.sign({ email, role }, 
     process.env.JWT_SECRET_TOKEN, {
-        expiresIn: '1d'
-    });
-    return token;
-}
-
-function createRefreshToken (email: any) {
-  const token = jwt.sign({ email }, 
-    process.env.JWT_REFRESH_TOKEN, {
         expiresIn: '1d'
     });
     return token;
@@ -61,7 +53,7 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
     
     const verified = jwt.verify(token, process.env.JWT_SECRET_TOKEN);
       if(!verified){
-        return res.status(401).send({ msg: "Invalid Token"});
+        return res.status(401).send({ errors: { msg: "Invalid Token" } });
       }
   } catch (err) {
     console.log(err)
@@ -76,4 +68,4 @@ function decodeToken(token: any) {
 }
 
 
-module.exports = { hashPassword, verifyPassword, createToken, verifyToken, createRefreshToken, decodeToken }
+module.exports = { hashPassword, verifyPassword, createToken, verifyToken, decodeToken }

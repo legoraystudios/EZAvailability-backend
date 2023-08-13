@@ -20,7 +20,7 @@ const connection = mysql.createConnection({
 connection.connect(function(err: any) {
   if (err) throw err
 
-  console.log('[EZAvailability] Database connected successfully.')
+  console.log('[EZAvailability Backend] Database connected successfully.')
 });
 
 module.exports = connection

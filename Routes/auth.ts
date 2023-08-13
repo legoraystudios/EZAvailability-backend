@@ -62,7 +62,8 @@ router.post('/login', loginValidator, (req: Request, res: Response) => {
         } else {
 
           // Setting up Access Token
-          const token = createToken(email)
+          const role = result[0].role_id
+          const token = createToken(email, role)
 
           // Setting up Refresh Token
           res.cookie('session', token, { httpOnly: true, 

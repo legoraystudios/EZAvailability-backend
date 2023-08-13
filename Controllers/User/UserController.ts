@@ -1,4 +1,4 @@
-import express, { Express, NextFunction, Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 const dotenv = require('dotenv')
 const database = require('../DatabaseController')
 const cookieparser = require("cookie-parser")
@@ -10,12 +10,12 @@ const app = express()
 app.use(cookieparser())
 
 const checkAdmin = (req: Request, res: Response, next: NextFunction) => {
-    
-    const email = decodeToken(req.cookies.session).email
 
-    database.query("SELECT role_id FROM ?? WHERE email = ?", [process.env.DB_ACCOUNTS_TABLE, email], async (err: any, result: any) => { 
-        console.log(result)
-    })
+    const role = decodeToken(req.cookies.session).role
+
+    if(role == 0) {
+        return res.status(403).json({ errors: { msg: "Insufficient Permissions" } })
+    }
 
     next()
 }
