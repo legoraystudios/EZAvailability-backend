@@ -1,8 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
 const dotenv = require('dotenv')
-const database = require('../DatabaseController')
+const database = require('./DatabaseController')
 const cookieparser = require("cookie-parser")
-const { decodeToken } = require('../Auth/AuthController')
+const { decodeToken } = require('./AuthController')
 
 dotenv.config({ path: '../../.env' });
 

@@ -1,10 +1,14 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
 const jwt = require("jsonwebtoken")
 const dotenv = require('dotenv')
-const database = require('../DatabaseController')
+const database = require('./DatabaseController')
 const bcrypt = require("bcryptjs")
+const cookieparser = require("cookie-parser")
 
 dotenv.config({ path: '../../.env' });
+
+const app = express()
+app.use(cookieparser())
 
 async function hashPassword(password: any) {
 
@@ -21,8 +25,6 @@ async function hashPassword(password: any) {
 
 function verifyPassword(password: any, hashedPassword: any) {
 
-  var result;
-
   bcrypt.compare(password, hashedPassword,
     async function (err: any, isMatch: any) {
       if(!isMatch) {
@@ -38,6 +40,14 @@ function verifyPassword(password: any, hashedPassword: any) {
 function createToken(email: any, role: any) {
   const token = jwt.sign({ email, role }, 
     process.env.JWT_SECRET_TOKEN, {
+        expiresIn: '30m'
+    });
+    return token;
+}
+
+function createRefresh(email: any) {
+  const token = jwt.sign({ email }, 
+    process.env.JWT_REFRESH_TOKEN, {
         expiresIn: '1d'
     });
     return token;
@@ -45,16 +55,19 @@ function createToken(email: any, role: any) {
 
 const verifyToken = (req: Request, res: Response, next: NextFunction) => {
   const token = req.cookies.session;
+
   if (!token) {
     return res.status(403).json({ errors: {msg: "Token Required, please log in again"} })
   }
 
   try {
     
-    const verified = jwt.verify(token, process.env.JWT_SECRET_TOKEN);
-      if(!verified){
-        return res.status(401).send({ errors: { msg: "Invalid Token" } });
+    const verify = jwt.verify(token, process.env.JWT_SECRET_TOKEN);
+
+      if(!verify){
+        return res.status(401).json({ errors: { msg: "Invalid Token" } });
       }
+
   } catch (err) {
     console.log(err)
   }
@@ -67,5 +80,10 @@ function decodeToken(token: any) {
   return decodedToken
 }
 
+function decodeRefresh(refreshToken: any) {
+  const decodedRefresh = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN)
+  return decodedRefresh
+}
 
-module.exports = { hashPassword, verifyPassword, createToken, verifyToken, decodeToken }
+
+module.exports = { hashPassword, verifyPassword, createToken, createRefresh, verifyToken, decodeToken, decodeRefresh }

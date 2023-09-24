@@ -1,16 +1,19 @@
 import express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser');
+const dotenv = require('dotenv')
 const app = express()
 const cors = require('cors')
-const port = 3000
+
+dotenv.config({ path: '.env' });
+const port = process.env.APP_PORT
 
 const appRouter = require('./Routes/app')
 const userRouter = require('./Routes/user')
 const authRouter = require('./Routes/auth')
 
 app.use(cors({
-  origin: 'http://localhost:3006',
+  origin: process.env.FRONTEND_DOMAIN,
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
 }))
