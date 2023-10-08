@@ -1,7 +1,6 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
 const jwt = require("jsonwebtoken")
 const dotenv = require('dotenv')
-const database = require('./DatabaseController')
 const bcrypt = require("bcryptjs")
 const cookieparser = require("cookie-parser")
 

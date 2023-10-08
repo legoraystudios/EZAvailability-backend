@@ -10,8 +10,8 @@ const router = express.Router()
 
 dotenv.config({ path: '../.env' });
 
-const app = express()
-app.use(cookieparser())
+const app = express();
+app.use(cookieparser());
 
 router.post('/login', loginValidator, (req: Request, res: Response) => {
     
