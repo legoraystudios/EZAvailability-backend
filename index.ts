@@ -12,6 +12,8 @@ const appRouter = require('./Routes/app')
 const userRouter = require('./Routes/user')
 const authRouter = require('./Routes/auth')
 const categoryRouter = require('./Routes/category')
+const productsRouter = require('./Routes/products')
+const scansRouter = require('./Routes/scans')
 
 app.use(cors({
   origin: process.env.FRONTEND_DOMAIN,
@@ -27,6 +29,8 @@ app.use('/', appRouter)
 app.use('/auth', authRouter)
 app.use('/user', userRouter)
 app.use('/category', categoryRouter)
+app.use('/products', productsRouter)
+app.use('/scans', scansRouter)
 
 app.listen(port, () => {
   console.log(`[EZAvailability Backend] App listening on port: ${port}`)

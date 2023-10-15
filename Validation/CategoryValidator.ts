@@ -20,3 +20,8 @@ export var deleteCatValidator = [
   // Check Category ID
   check('categoryId', 'Please, enter a valid Category Id').isInt().notEmpty().trim().escape(),
 ];
+
+export var getCatValidator = [
+  // Check Category ID
+  check('id', 'Please, enter a valid Category Id').isInt().trim().escape(),
+];

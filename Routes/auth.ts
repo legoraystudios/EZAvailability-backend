@@ -32,7 +32,7 @@ router.post('/login', loginValidator, (req: Request, res: Response) => {
         }
 
         if(result.length == 0) {
-          res.status(401).json({ errors: {msg: "Account not found in our records."} })
+          res.status(404).json({ errors: {msg: "Account not found in our records."} })
         } else if(await verifyPassword(password, result[0]['hashed_passwd']) == false) {
           res.status(401).json({ errors: {msg: "Invalid password."} })
         } else {
