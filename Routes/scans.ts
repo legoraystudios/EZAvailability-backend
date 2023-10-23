@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import moment from 'moment';
-import { scanInValidator, scanOutValidator } from '../Validation/ScansValidator';
+import { scanValidator, scanListValidator } from '../Validation/ScansValidator';
 import { validationResult } from 'express-validator';
 const dotenv = require('dotenv');
 const database = require('../Controllers/DatabaseController');
@@ -13,19 +13,48 @@ const router = express.Router();
 
 dotenv.config({ path: '../.env' });
 
-router.get('/', verifyToken, (req: Request, res: Response) => {
+router.get('/', verifyToken, scanListValidator, (req: Request, res: Response) => {
     
     try {
 
-        database.query("SELECT * FROM ??", [process.env.DB_SCANS_TABLE], (err: any, result: any) => {
-            if(err) {
-                errorHandling(err, req, res);
-            } else if (result.length == 0) {
-                res.status(404).json({ errors: {msg: "No scans available to display."} });
-            } else {
-                res.status(200).json(result);
+        const validatorError = validationResult(req)
+
+        if (!validatorError.isEmpty()) {
+          return res.status(400).json({ errors: validatorError.array() })
+        } else {
+
+        const limitPerPage = parseInt(req.query.limitPerPage as string);
+        const page = parseInt(req.query.page as string);
+    
+        if(limitPerPage && page) {
+            var offSet = (page - 1) * limitPerPage
+            if(!offSet) {
+                offSet = 0;
             }
-        })
+
+            database.query("SELECT * FROM ?? LIMIT ? OFFSET ?;", [process.env.DB_SCANS_TABLE, limitPerPage, offSet], (err: any, result: any) => {
+                if(err) {
+                    errorHandling(err, req, res);
+                } else if (result.length == 0) {
+                    res.status(404).json({ errors: {msg: "No scans available to display."} });
+                } else {
+                    res.status(200).json(result);
+                }
+            })
+        } else {
+            database.query("SELECT * FROM ??;", [process.env.DB_SCANS_TABLE], (err: any, result: any) => {
+                if(err) {
+                    errorHandling(err, req, res);
+                } else if (result.length == 0) {
+                    res.status(404).json({ errors: {msg: "No scans available to display."} });
+                } else {
+                    res.status(200).json(result);
+                }
+            })
+        }
+
+    }
+
 
     } catch (err) {
         errorHandling(err, req, res);
@@ -55,21 +84,49 @@ router.get('/:id', verifyToken, (req: Request, res: Response) => {
 
 })
 
-router.get('/product/:id', verifyToken, (req: Request, res: Response) => {
+router.get('/product/:id', verifyToken, scanListValidator, (req: Request, res: Response) => {
     
     try {
 
-        const { id } = req.params;
+        const validatorError = validationResult(req)
 
-        database.query("SELECT * FROM ?? WHERE product_id = ?", [process.env.DB_SCANS_TABLE, id], (err: any, result: any) => {
-            if(err) {
-                errorHandling(err, req, res);
-            } else if (result.length == 0) {
-                res.status(404).json({ errors: {msg: "No scans available to display."} });
-            } else {
-                res.status(200).json(result);
+        if (!validatorError.isEmpty()) {
+          return res.status(400).json({ errors: validatorError.array() })
+        } else {
+
+        const { id } = req.params;
+        const limitPerPage = parseInt(req.query.limitPerPage as string);
+        const page = parseInt(req.query.page as string);
+    
+        if(limitPerPage && page) {
+            var offSet = (page - 1) * limitPerPage
+            if(!offSet) {
+                offSet = 0;
             }
-        })
+
+            database.query("SELECT * FROM ?? WHERE product_id = ? LIMIT ? OFFSET ?;", [process.env.DB_SCANS_TABLE, id, limitPerPage, offSet], (err: any, result: any) => {
+                if(err) {
+                    errorHandling(err, req, res);
+                } else if (result.length == 0) {
+                    res.status(404).json({ errors: {msg: "No scans available to display."} });
+                } else {
+                    res.status(200).json(result);
+                }
+            })
+        
+        } else {
+            database.query("SELECT * FROM ?? WHERE product_id = ?", [process.env.DB_SCANS_TABLE, id], (err: any, result: any) => {
+                if(err) {
+                    errorHandling(err, req, res);
+                } else if (result.length == 0) {
+                    res.status(404).json({ errors: {msg: "No scans available to display."} });
+                } else {
+                    res.status(200).json(result);
+                }
+            })
+        }
+
+    }
 
     } catch (err) {
         errorHandling(err, req, res);
@@ -77,7 +134,7 @@ router.get('/product/:id', verifyToken, (req: Request, res: Response) => {
 
 })
 
-router.post('/in', verifyToken, scanInValidator, (req: Request, res: Response) => {
+router.post('/in', verifyToken, scanValidator, (req: Request, res: Response) => {
 
     try {
 
@@ -128,7 +185,7 @@ router.post('/in', verifyToken, scanInValidator, (req: Request, res: Response) =
 
 })
 
-router.post('/out', verifyToken, scanInValidator, (req: Request, res: Response) => {
+router.post('/out', verifyToken, scanValidator, (req: Request, res: Response) => {
 
     try {
 

@@ -1,6 +1,13 @@
 const { check } = require('express-validator')
 
-export var scanInValidator = [
+export var scanListValidator = [
+  // Check Product UPC
+  check('limitPerPage', 'Please, enter a valid Page Limit').optional().isInt().trim().escape(),
+  // Check Product Qty
+  check('page', 'Please, enter a valid Page number').optional().isInt().trim().escape()
+];
+
+export var scanValidator = [
     // Check Product UPC
     check('productUpc', 'Please, enter a valid Product Code (UPC)').notEmpty().isInt().trim().escape(),
     // Check Product Qty

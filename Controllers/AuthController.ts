@@ -36,16 +36,16 @@ function verifyPassword(password: any, hashedPassword: any) {
     return bcrypt.compare(password, hashedPassword);
 }
 
-function createToken(email: any, role: any) {
-  const token = jwt.sign({ email, role }, 
+function createToken(id: any, email: any, role: any) {
+  const token = jwt.sign({ id, email, role }, 
     process.env.JWT_SECRET_TOKEN, {
         expiresIn: '30m'
     });
     return token;
 }
 
-function createRefresh(email: any) {
-  const token = jwt.sign({ email }, 
+function createRefresh(id: any, email: any) {
+  const token = jwt.sign({ id, email }, 
     process.env.JWT_REFRESH_TOKEN, {
         expiresIn: '1d'
     });

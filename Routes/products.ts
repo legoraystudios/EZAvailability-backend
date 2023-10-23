@@ -23,8 +23,9 @@ router.get('/:id', getProductValidator, verifyToken, (req: Request, res: Respons
             const { id } = req.params;
 
             database.query("SELECT * FROM ?? WHERE product_id = ?;", [process.env.DB_PRODUCTS_TABLE, id], (err: any, result: any) => {
-
-                if(result.length === 0) {
+                if (err) {
+                    errorHandling(err, req, res);
+                } else if(result.length === 0) {
                     res.status(422).json({ errors: {msg: "Product not found in our records."} })
                 } else {
                     res.status(200).json({result})
@@ -45,7 +46,11 @@ router.get('/', verifyToken, (req: Request, res: Response) => {
     try {
 
         database.query("SELECT * FROM ??;", [process.env.DB_PRODUCTS_TABLE], (err: any, result: any) => {
-                res.status(200).json({result})
+            if (err) {
+                errorHandling(err, req, res);
+            } else {
+                res.status(200).json({result});
+            }
         })
 
     } catch (err) {
@@ -74,11 +79,15 @@ router.post('/create', verifyToken, createProductValidator, async (req: Request,
 
             
         database.query("SELECT * FROM ?? WHERE product_name = ?;", [process.env.DB_PRODUCTS_TABLE, productName], (err: any, result: any) => {
-            if(result.length > 0) {
+            if (err) {
+                res.status(200).json({result})
+            } else if(result.length > 0) {
                 res.status(400).json({ errors: {msg: "Product Name already exist in our records."} })
             } else {
                 database.query("SELECT * FROM ?? WHERE category_id = ?;", [process.env.DB_CATEGORY_TABLE, categoryId], (err: any, result: any) => {
-                    if(result.length === 0) {
+                    if (err) {
+                        res.status(200).json({result})
+                    } else if(result.length === 0) {
                         res.status(400).json({ errors: {msg: "Category ID doesn't exist in our records."} })
                     } else {
                         database.query("INSERT INTO ?? (product_id, product_name, product_desc, product_qty, product_upc, low_stock_alert, category_id) VALUES (?, ?, ?, ?, ?, ?, ?);", [process.env.DB_PRODUCTS_TABLE, productId, productName, productDesc, productQty, productUpc, lowStockAlert, categoryId], (err: any, result: any) => {
@@ -120,8 +129,9 @@ router.put('/edit', verifyToken, editProductValidator, (req: Request, res: Respo
             const categoryId = req.body.categoryId;
 
             database.query("SELECT * FROM ?? WHERE product_id = ?;", [process.env.DB_PRODUCTS_TABLE, productId], (err: any, result: any) => {
-
-                if(result.length === 0) {
+                if (err) {
+                    res.status(200).json({result})
+                } else if(result.length === 0) {
                     res.status(422).json({ errors: {msg: "Product not found in our records."} })
                 } else {
                     database.query("UPDATE ?? SET product_name = ?, product_desc = ?, product_qty = ?, product_upc = ?, low_stock_alert = ?, category_id = ? WHERE product_id = ?;", 
@@ -156,19 +166,24 @@ router.delete('/delete', verifyToken, deleteProductValidator, async (req: Reques
             const productId = req.body.productId;
 
             database.query("SELECT * FROM ?? WHERE product_id = ?", [process.env.DB_PRODUCTS_TABLE, productId], async (err: any, result: any) => {
-                if(result.length === 0) {
+                if (err) {
+                    errorHandling(err, req, res);
+                } else if(result.length === 0) {
                     res.status(404).json({ msg: "Product not found in our records" })
                 } else {
                     database.query("DELETE FROM ?? WHERE product_id = ?", [process.env.DB_PRODUCTS_TABLE, productId], async (err: any, result: any) => {
-                        res.status(200).json({ msg: "Product deleted successfully" })
+                        if (err) {
+                            errorHandling(err, req, res);
+                        } else {
+                            res.status(200).json({ msg: "Product deleted successfully" })
+                        }
                     })
                 }
             })
-
         }
 
     } catch (err) {
-        console.log(err);
+        errorHandling(err, req, res);
     }
 
 })
