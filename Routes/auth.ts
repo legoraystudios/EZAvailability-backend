@@ -91,26 +91,29 @@ router.post('/register', registerValidator, verifyToken, checkAdmin, async (req:
         roleId = 0
       } else if (roleId < 0 || roleId >= 2) {
         res.status(422).json({ errors: {msg: "Please enter a valid Role ID.", errCode: "Reg02"} })
+      } else {
+        
+        let hashedPassword = await hashPassword(password);
+
+        database.query("SELECT * FROM ?? WHERE email = ?", [process.env.DB_ACCOUNTS_TABLE, email], (err: any, result: any) => {
+            if(err) {
+              errorHandling(err, req, res);
+            } else if(result.length > 0) {
+              res.status(422).json({ errors: {msg: "Email already exist in our records", errCode: "Reg03"} })
+            } else {
+              database.query('INSERT INTO ?? (email, first_name, last_name, hashed_passwd, created_at, role_id) VALUES (?, ?, ?, ?, ?, ?);',[process.env.DB_ACCOUNTS_TABLE, email, firstName, lastName, hashedPassword, createdAt, roleId], (err: any, result: any) => {
+                if (err) {
+                  errorHandling(err, req, res);
+                } else {
+                  res.status(200).json({ msg: "Account created successfully"});
+                }
+            })
+            }
+        })
+    
       }
   
-      let hashedPassword = await hashPassword(password);
   
-  
-      database.query("SELECT * FROM ?? WHERE email = ?", [process.env.DB_ACCOUNTS_TABLE, email], (err: any, result: any) => {
-          if(err) {
-            errorHandling(err, req, res);
-          } else if(result.length > 0) {
-            res.status(422).json({ errors: {msg: "Email already exist in our records", errCode: "Reg03"} })
-          } else {
-            database.query('INSERT INTO ?? (email, first_name, last_name, hashed_passwd, created_at, role_id) VALUES (?, ?, ?, ?, ?, ?);',[process.env.DB_ACCOUNTS_TABLE, email, firstName, lastName, hashedPassword, createdAt, roleId], (err: any, result: any) => {
-              if (err) {
-                errorHandling(err, req, res);
-              } else {
-                res.status(200).json({ msg: "Account created successfully"});
-              }
-          })
-          }
-      })
   
     }
 

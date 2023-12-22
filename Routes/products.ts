@@ -45,13 +45,184 @@ router.get('/', verifyToken, (req: Request, res: Response) => {
 
     try {
 
-        database.query("SELECT * FROM ??;", [process.env.DB_PRODUCTS_TABLE], (err: any, result: any) => {
-            if (err) {
-                errorHandling(err, req, res);
-            } else {
-                res.status(200).json({result});
-            }
-        })
+        var limitPerPage = parseInt(req.query.limitPerPage as string);
+        const page = parseInt(req.query.page as string);
+        const { productName, productId, productUpc, categoryId } = req.query;
+
+        var offSet = (page - 1) * limitPerPage
+        if(!offSet) {
+            offSet = 0;
+        }
+
+        if(!limitPerPage) {
+            limitPerPage = 10;
+        }
+
+        if(productName) {
+            database.query(
+                `
+                WITH TotalCount AS(
+                    SELECT COUNT(*) AS total_rows
+                    FROM ??
+                )
+                SELECT
+                    products.product_id,
+                    products.product_name,
+                    products.product_desc,
+                    products.product_qty,
+                    products.product_upc,
+                    products.low_stock_alert,
+                    products.category_id,
+                    category.category_name,
+                    (SELECT total_rows FROM TotalCount) AS total_rows
+                    FROM
+                        ?? products,
+                        ?? category
+                    WHERE 
+                        products.product_name LIKE ? AND
+                        category.category_id = products.category_id
+                    LIMIT ? OFFSET ?;
+                `
+            , [process.env.DB_PRODUCTS_TABLE, process.env.DB_PRODUCTS_TABLE,
+            process.env.DB_CATEGORY_TABLE, [`%${productName}%`], limitPerPage, offSet], (err: any, result: any) => {
+                if(err) {
+                    errorHandling(err, req, res);
+                } else {
+                    res.status(200).json(result);
+                }
+            })
+        } else if (productId) {
+            database.query(
+                `
+                WITH TotalCount AS(
+                    SELECT COUNT(*) AS total_rows
+                    FROM ??
+                )
+                SELECT
+                    products.product_id,
+                    products.product_name,
+                    products.product_desc,
+                    products.product_qty,
+                    products.product_upc,
+                    products.low_stock_alert,
+                    products.category_id,
+                    category.category_name,
+                    (SELECT total_rows FROM TotalCount) AS total_rows
+                    FROM
+                        ?? products,
+                        ?? category
+                    WHERE 
+                        products.product_id = ? AND
+                        category.category_id = products.category_id
+                    LIMIT ? OFFSET ?;
+                `
+            , [process.env.DB_PRODUCTS_TABLE, process.env.DB_PRODUCTS_TABLE,
+            process.env.DB_CATEGORY_TABLE, productId, limitPerPage, offSet], (err: any, result: any) => {
+                if(err) {
+                    errorHandling(err, req, res);
+                } else {
+                    res.status(200).json(result);
+                }
+            })
+        } else if (productUpc) {
+            database.query(
+                `
+                WITH TotalCount AS(
+                    SELECT COUNT(*) AS total_rows
+                    FROM ??
+                )
+                SELECT
+                    products.product_id,
+                    products.product_name,
+                    products.product_desc,
+                    products.product_qty,
+                    products.product_upc,
+                    products.low_stock_alert,
+                    products.category_id,
+                    category.category_name,
+                    (SELECT total_rows FROM TotalCount) AS total_rows
+                    FROM
+                        ?? products,
+                        ?? category
+                    WHERE 
+                        products.product_upc = ? AND
+                        category.category_id = products.category_id
+                    LIMIT ? OFFSET ?;
+                `
+            , [process.env.DB_PRODUCTS_TABLE, process.env.DB_PRODUCTS_TABLE,
+            process.env.DB_CATEGORY_TABLE, productUpc, limitPerPage, offSet], (err: any, result: any) => {
+                if(err) {
+                    errorHandling(err, req, res);
+                } else {
+                    res.status(200).json(result);
+                }
+            })
+        } else if (categoryId) {
+            database.query(
+                `
+                WITH TotalCount AS(
+                    SELECT COUNT(*) AS total_rows
+                    FROM ??
+                )
+                SELECT
+                    products.product_id,
+                    products.product_name,
+                    products.product_desc,
+                    products.product_qty,
+                    products.product_upc,
+                    products.low_stock_alert,
+                    products.category_id,
+                    category.category_name,
+                    (SELECT total_rows FROM TotalCount) AS total_rows
+                    FROM
+                        ?? products,
+                        ?? category
+                    WHERE 
+                        category.category_id = products.category_id AND
+                        products.category_id = ?
+                    LIMIT ? OFFSET ?;
+                `
+            , [process.env.DB_PRODUCTS_TABLE, process.env.DB_PRODUCTS_TABLE,
+            process.env.DB_CATEGORY_TABLE, categoryId, limitPerPage, offSet], (err: any, result: any) => {
+                if(err) {
+                    errorHandling(err, req, res);
+                } else {
+                    res.status(200).json(result);
+                }
+            })
+        } else {
+            database.query(
+                `
+                WITH TotalCount AS(
+                    SELECT COUNT(*) AS total_rows
+                    FROM ??
+                )
+                SELECT
+                    products.product_id,
+                    products.product_name,
+                    products.product_desc,
+                    products.product_qty,
+                    products.product_upc,
+                    products.low_stock_alert,
+                    products.category_id,
+                    category.category_name,
+                    (SELECT total_rows FROM TotalCount) AS total_rows
+                    FROM
+                        ?? products,
+                        ?? category
+                    WHERE 
+                        category.category_id = products.category_id
+                    LIMIT ? OFFSET ?;
+                `
+            , [process.env.DB_PRODUCTS_TABLE, process.env.DB_PRODUCTS_TABLE,
+            process.env.DB_CATEGORY_TABLE, limitPerPage, offSet], (err: any, result: any) => {
+                if(err) {
+                    errorHandling(err, req, res);
+                } else {
+                    res.status(200).json(result);
+                }
+            })
+        }
 
     } catch (err) {
         errorHandling(err, req, res);

@@ -23,35 +23,50 @@ router.get('/', verifyToken, scanListValidator, (req: Request, res: Response) =>
           return res.status(400).json({ errors: validatorError.array() })
         } else {
 
-        const limitPerPage = parseInt(req.query.limitPerPage as string);
+        var limitPerPage = parseInt(req.query.limitPerPage as string);
         const page = parseInt(req.query.page as string);
     
-        if(limitPerPage && page) {
             var offSet = (page - 1) * limitPerPage
             if(!offSet) {
                 offSet = 0;
             }
 
-            database.query("SELECT * FROM ?? LIMIT ? OFFSET ?;", [process.env.DB_SCANS_TABLE, limitPerPage, offSet], (err: any, result: any) => {
+            if(!limitPerPage) {
+                limitPerPage = 10;
+            }
+
+            database.query(
+                `
+                WITH TotalCount AS (
+                    SELECT COUNT(*) AS total_rows 
+                    FROM ??
+                )
+                SELECT 
+                    scan.scan_id, 
+                    scan.product_id,
+                    product.product_name,
+                    scan.scan_date, 
+                    scan.scan_type, 
+                    scan.actioned_by, 
+                    accounts.first_name, 
+                    accounts.last_name,
+                    (SELECT total_rows FROM TotalCount) AS total_rows 
+                    FROM 
+                        ?? scan, 
+                        ?? product,
+                        ?? accounts 
+                    WHERE 
+                        scan.actioned_by = accounts.id AND
+                        product.product_id = scan.product_id
+                    LIMIT ? OFFSET ?;
+                `
+            , [process.env.DB_SCANS_TABLE, process.env.DB_SCANS_TABLE, process.env.DB_PRODUCTS_TABLE, process.env.DB_ACCOUNTS_TABLE, limitPerPage, offSet], (err: any, result: any) => {
                 if(err) {
                     errorHandling(err, req, res);
-                } else if (result.length == 0) {
-                    res.status(404).json({ errors: {msg: "No scans available to display."} });
                 } else {
                     res.status(200).json(result);
                 }
             })
-        } else {
-            database.query("SELECT * FROM ??;", [process.env.DB_SCANS_TABLE], (err: any, result: any) => {
-                if(err) {
-                    errorHandling(err, req, res);
-                } else if (result.length == 0) {
-                    res.status(404).json({ errors: {msg: "No scans available to display."} });
-                } else {
-                    res.status(200).json(result);
-                }
-            })
-        }
 
     }
 
@@ -71,8 +86,6 @@ router.get('/:id', verifyToken, (req: Request, res: Response) => {
         database.query("SELECT * FROM ?? WHERE scan_id = ?", [process.env.DB_SCANS_TABLE, id], (err: any, result: any) => {
             if(err) {
                 errorHandling(err, req, res);
-            } else if (result.length == 0) {
-                res.status(404).json({ errors: {msg: "No scans available to display."} });
             } else {
                 res.status(200).json(result);
             }
@@ -107,8 +120,6 @@ router.get('/product/:id', verifyToken, scanListValidator, (req: Request, res: R
             database.query("SELECT * FROM ?? WHERE product_id = ? LIMIT ? OFFSET ?;", [process.env.DB_SCANS_TABLE, id, limitPerPage, offSet], (err: any, result: any) => {
                 if(err) {
                     errorHandling(err, req, res);
-                } else if (result.length == 0) {
-                    res.status(404).json({ errors: {msg: "No scans available to display."} });
                 } else {
                     res.status(200).json(result);
                 }
@@ -118,8 +129,6 @@ router.get('/product/:id', verifyToken, scanListValidator, (req: Request, res: R
             database.query("SELECT * FROM ?? WHERE product_id = ?", [process.env.DB_SCANS_TABLE, id], (err: any, result: any) => {
                 if(err) {
                     errorHandling(err, req, res);
-                } else if (result.length == 0) {
-                    res.status(404).json({ errors: {msg: "No scans available to display."} });
                 } else {
                     res.status(200).json(result);
                 }

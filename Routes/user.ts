@@ -18,31 +18,179 @@ router.get('/', verifyToken, checkAdmin, (req, res) => {
 
     try {
 
-        const limitPerPage = parseInt(req.query.limitPerPage as string);
+        var limitPerPage = parseInt(req.query.limitPerPage as string);
         const page = parseInt(req.query.page as string);
+        const { id, firstName, lastName, email } = req.query;
     
-        if(limitPerPage || page) {
             var offSet = (page - 1) * limitPerPage
             if(!offSet) {
                 offSet = 0;
             }
-            
-            database.query("SELECT accounts.id, accounts.email, accounts.first_name, accounts.last_name, accounts.created_at, accounts.role_id, roles.role_title FROM ?? accounts, ?? roles WHERE roles.role_id = accounts.role_id ORDER BY accounts.id LIMIT ? OFFSET ?;", [process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, limitPerPage, offSet], async (err: any, result: any) => { 
-                if (err) {
-                    errorHandling(err, req, res);
-                } else {
-                    res.status(200).json(result)
-                }
-            })
+
+            if(!limitPerPage) {
+                limitPerPage = 10;
+            }
+
+            if (id) {
+                database.query(
+                    `
+                    WITH TotalCount AS (
+                        SELECT COUNT(*) AS total_rows 
+                        FROM ?? accounts 
+                        INNER JOIN ?? roles ON roles.role_id = accounts.role_id
+                    )
+                  SELECT 
+                    accounts.id, 
+                    accounts.email, 
+                    accounts.first_name, 
+                    accounts.last_name, 
+                    accounts.created_at, 
+                    accounts.role_id, 
+                    roles.role_title, 
+                    (SELECT total_rows FROM TotalCount) AS total_rows 
+                    FROM 
+                        ?? accounts 
+                    INNER JOIN ?? roles ON roles.role_id = accounts.role_id 
+                    WHERE accounts.id = ?
+                    ORDER BY 
+                        accounts.id 
+                    LIMIT ? OFFSET ?;
+                    `, 
+                    [process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, id, limitPerPage, offSet], async (err: any, result: any) => { 
+                    if (err) {
+                        errorHandling(err, req, res);
+                    } else {
+                        res.status(200).json(result)
+                    }
+                })
+            } else if (firstName) {
+                database.query(
+                    `
+                    WITH TotalCount AS (
+                        SELECT COUNT(*) AS total_rows 
+                        FROM ?? accounts 
+                        INNER JOIN ?? roles ON roles.role_id = accounts.role_id
+                    )
+                  SELECT 
+                    accounts.id, 
+                    accounts.email, 
+                    accounts.first_name, 
+                    accounts.last_name, 
+                    accounts.created_at, 
+                    accounts.role_id, 
+                    roles.role_title, 
+                    (SELECT total_rows FROM TotalCount) AS total_rows 
+                    FROM 
+                        ?? accounts 
+                    INNER JOIN ?? roles ON roles.role_id = accounts.role_id 
+                    WHERE accounts.first_name LIKE ?
+                    ORDER BY 
+                        accounts.id 
+                    LIMIT ? OFFSET ?;
+                    `, 
+                    [process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, [`%${firstName}%`], limitPerPage, offSet], async (err: any, result: any) => { 
+                    if (err) {
+                        errorHandling(err, req, res);
+                    } else {
+                        res.status(200).json(result)
+                    }
+                })
+            } else if (lastName) {
+                database.query(
+                    `
+                    WITH TotalCount AS (
+                        SELECT COUNT(*) AS total_rows 
+                        FROM ?? accounts 
+                        INNER JOIN ?? roles ON roles.role_id = accounts.role_id
+                    )
+                  SELECT 
+                    accounts.id, 
+                    accounts.email, 
+                    accounts.first_name, 
+                    accounts.last_name, 
+                    accounts.created_at, 
+                    accounts.role_id, 
+                    roles.role_title, 
+                    (SELECT total_rows FROM TotalCount) AS total_rows 
+                    FROM 
+                        ?? accounts 
+                    INNER JOIN ?? roles ON roles.role_id = accounts.role_id 
+                    WHERE accounts.last_name LIKE ?
+                    ORDER BY 
+                        accounts.id 
+                    LIMIT ? OFFSET ?;
+                    `, 
+                    [process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, [`%${lastName}%`], limitPerPage, offSet], async (err: any, result: any) => { 
+                    if (err) {
+                        errorHandling(err, req, res);
+                    } else {
+                        res.status(200).json(result)
+                    }
+                })
+            } else if(email) {
+                database.query(
+                    `
+                    WITH TotalCount AS (
+                        SELECT COUNT(*) AS total_rows 
+                        FROM ?? accounts 
+                        INNER JOIN ?? roles ON roles.role_id = accounts.role_id
+                    )
+                  SELECT 
+                    accounts.id, 
+                    accounts.email, 
+                    accounts.first_name, 
+                    accounts.last_name, 
+                    accounts.created_at, 
+                    accounts.role_id, 
+                    roles.role_title, 
+                    (SELECT total_rows FROM TotalCount) AS total_rows 
+                    FROM 
+                        ?? accounts 
+                    INNER JOIN ?? roles ON roles.role_id = accounts.role_id 
+                    WHERE accounts.email LIKE ?
+                    ORDER BY 
+                        accounts.id 
+                    LIMIT ? OFFSET ?;
+                    `, 
+                    [process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, [`%${email}%`], limitPerPage, offSet], async (err: any, result: any) => { 
+                    if (err) {
+                        errorHandling(err, req, res);
+                    } else {
+                        res.status(200).json(result)
+                    }
+                })
+            } else {
+                database.query(
+                    `
+                    WITH TotalCount AS (
+                        SELECT COUNT(*) AS total_rows 
+                        FROM ?? accounts 
+                        INNER JOIN ?? roles ON roles.role_id = accounts.role_id
+                    )
+                  SELECT 
+                    accounts.id, 
+                    accounts.email, 
+                    accounts.first_name, 
+                    accounts.last_name, 
+                    accounts.created_at, 
+                    accounts.role_id, 
+                    roles.role_title, 
+                    (SELECT total_rows FROM TotalCount) AS total_rows 
+                    FROM 
+                        ?? accounts 
+                    INNER JOIN ?? roles ON roles.role_id = accounts.role_id 
+                    ORDER BY 
+                        accounts.id 
+                    LIMIT ? OFFSET ?;
+                    `, 
+                    [process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, process.env.DB_ACCOUNTS_TABLE, process.env.DB_ROLES_TABLE, limitPerPage, offSet], async (err: any, result: any) => { 
+                    if (err) {
+                        errorHandling(err, req, res);
+                    } else {
+                        res.status(200).json(result)
+                    }
+                }) 
     
-        } else {
-            database.query("SELECT accounts.id, accounts.email, accounts.first_name, accounts.last_name, accounts.created_at, accounts.role_id, roles.role_title FROM ?? accounts, ?? roles WHERE roles.role_id = accounts.role_id ORDER BY accounts.id;", [process.env.DB_ACCOUNTS_TABLE,process.env.DB_ROLES_TABLE], async (err: any, result: any) => { 
-                if (err) {
-                    errorHandling(err, req, res);
-                } else {
-                    res.status(200).json(result)
-                }
-            })
         }
 
     } catch (err) {

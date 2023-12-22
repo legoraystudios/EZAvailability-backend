@@ -49,7 +49,7 @@ router.get('/', verifyToken, (req: Request, res: Response) => {
             if (err) {
                 errorHandling(err, req, res);
             } else {
-                res.status(200).json({result})
+                res.status(200).json(result)
             }
         })
 
