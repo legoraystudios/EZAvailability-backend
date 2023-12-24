@@ -251,21 +251,29 @@ router.post('/create', verifyToken, createProductValidator, async (req: Request,
             
         database.query("SELECT * FROM ?? WHERE product_name = ?;", [process.env.DB_PRODUCTS_TABLE, productName], (err: any, result: any) => {
             if (err) {
-                res.status(200).json({result})
+                errorHandling(err, req, res);
             } else if(result.length > 0) {
-                res.status(400).json({ errors: {msg: "Product Name already exist in our records."} })
+                res.status(400).json({ errors: {msg: "Product Name already exist in our records.", errCode: "Prod01"} })
             } else {
                 database.query("SELECT * FROM ?? WHERE category_id = ?;", [process.env.DB_CATEGORY_TABLE, categoryId], (err: any, result: any) => {
                     if (err) {
-                        res.status(200).json({result})
+                        errorHandling(err, req, res);
                     } else if(result.length === 0) {
-                        res.status(400).json({ errors: {msg: "Category ID doesn't exist in our records."} })
+                        res.status(400).json({ errors: {msg: "Category ID doesn't exist in our records.", errCode: "Prod02"} })
                     } else {
-                        database.query("INSERT INTO ?? (product_id, product_name, product_desc, product_qty, product_upc, low_stock_alert, category_id) VALUES (?, ?, ?, ?, ?, ?, ?);", [process.env.DB_PRODUCTS_TABLE, productId, productName, productDesc, productQty, productUpc, lowStockAlert, categoryId], (err: any, result: any) => {
+                        database.query("SELECT * FROM ?? WHERE product_upc = ?;", [process.env.DB_PRODUCTS_TABLE, productUpc], (err: any, result: any) => {
                             if (err) {
                                 errorHandling(err, req, res);
+                            } else if(result.length > 0) {
+                                res.status(400).json({ errors: {msg: "Product UPC already exist in our records.", errCode: "Prod03"} })
                             } else {
-                                res.status(200).json({ msg: "Product created successfully" })
+                                database.query("INSERT INTO ?? (product_id, product_name, product_desc, product_qty, product_upc, low_stock_alert, category_id) VALUES (?, ?, ?, ?, ?, ?, ?);", [process.env.DB_PRODUCTS_TABLE, productId, productName, productDesc, productQty, productUpc, lowStockAlert, categoryId], (err: any, result: any) => {
+                                    if (err) {
+                                        errorHandling(err, req, res);
+                                    } else {
+                                        res.status(200).json({ msg: "Product created successfully" })
+                                    }
+                                })
                             }
                         })
                     }
@@ -301,16 +309,40 @@ router.put('/edit', verifyToken, editProductValidator, (req: Request, res: Respo
 
             database.query("SELECT * FROM ?? WHERE product_id = ?;", [process.env.DB_PRODUCTS_TABLE, productId], (err: any, result: any) => {
                 if (err) {
-                    res.status(200).json({result})
+                    errorHandling(err, req, res);
                 } else if(result.length === 0) {
-                    res.status(422).json({ errors: {msg: "Product not found in our records."} })
+                    res.status(404).json({ errors: {msg: "Product not found in our records."} })
                 } else {
-                    database.query("UPDATE ?? SET product_name = ?, product_desc = ?, product_qty = ?, product_upc = ?, low_stock_alert = ?, category_id = ? WHERE product_id = ?;", 
-                    [process.env.DB_PRODUCTS_TABLE, productName, productDesc, productQty, productUpc, lowStockAlert, categoryId, productId], (err: any, result: any) => {
+                    database.query("SELECT * FROM ?? WHERE product_name = ? AND product_id NOT LIKE ?;", [process.env.DB_PRODUCTS_TABLE, productName, productId], (err: any, result: any) => {
                         if (err) {
                             errorHandling(err, req, res);
+                        } else if (result.length > 0) {
+                            res.status(400).json({ errors: {msg: "Product Name already exist in our records.", errCode: "Prod01"} })
                         } else {
-                            res.status(200).json({ msg: "Product edited successfully" });
+                            database.query("SELECT * FROM ?? WHERE product_upc = ? AND product_id NOT LIKE ?;", [process.env.DB_PRODUCTS_TABLE, productUpc, productId], (err: any, result: any) => {
+                                if (err) {
+                                    errorHandling(err, req, res);
+                                } else if (result.length > 0) {
+                                    res.status(400).json({ errors: {msg: "Product UPC already exist in our records.", errCode: "Prod03"} })
+                                } else {
+                                    database.query("SELECT * FROM ?? WHERE category_id = ?;", [process.env.DB_CATEGORY_TABLE, categoryId], (err: any, result: any) => {
+                                        if (err) {
+                                            errorHandling(err, req, res);
+                                        } else if (result.length === 0) {
+                                            res.status(400).json({ errors: {msg: "Category ID doesn't exist in our records.", errCode: "Prod02"} })
+                                        } else {
+                                            database.query("UPDATE ?? SET product_name = ?, product_desc = ?, product_qty = ?, product_upc = ?, low_stock_alert = ?, category_id = ? WHERE product_id = ?;", 
+                                            [process.env.DB_PRODUCTS_TABLE, productName, productDesc, productQty, productUpc, lowStockAlert, categoryId, productId], (err: any, result: any) => {
+                                                if (err) {
+                                                    errorHandling(err, req, res);
+                                                } else {
+                                                    res.status(200).json({ msg: "Product edited successfully" });
+                                                }
+                                            })
+                                        }
+                                    })
+                                }
+                            }) 
                         }
                     })
                 }

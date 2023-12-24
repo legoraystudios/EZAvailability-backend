@@ -34,7 +34,7 @@ export var editProductValidator = [
 
 export var deleteProductValidator = [
   // Check Product ID
-  check('prodcutId', 'Please, enter a valid Product Id').isInt().notEmpty().trim().escape(),
+  check('productId', 'Please, enter a valid Product Id').isInt().notEmpty().trim().escape(),
 ];
 
 export var getProductValidator = [
