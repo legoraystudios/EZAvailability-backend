@@ -58,6 +58,8 @@ router.get('/', verifyToken, scanListValidator, (req: Request, res: Response) =>
                     WHERE 
                         scan.actioned_by = accounts.id AND
                         product.product_id = scan.product_id
+                    ORDER BY 
+                        scan.scan_date DESC
                     LIMIT ? OFFSET ?;
                 `
             , [process.env.DB_SCANS_TABLE, process.env.DB_SCANS_TABLE, process.env.DB_PRODUCTS_TABLE, process.env.DB_ACCOUNTS_TABLE, limitPerPage, offSet], (err: any, result: any) => {
@@ -160,7 +162,7 @@ router.post('/in', verifyToken, scanValidator, (req: Request, res: Response) => 
                 if(err) {
                     errorHandling(err, req, res);
                 } else if(result.length === 0) {
-                    res.status(404).json({ errors: {msg: "Product not found in our records."} })
+                    res.status(404).json({ errors: {msg: "Product not found in our records.", errCode: "Prod04"} })
                 } else {
 
                     const productId = result[0].product_id;
@@ -212,7 +214,7 @@ router.post('/out', verifyToken, scanValidator, (req: Request, res: Response) =>
                 if (err) {
                     errorHandling(err, req, res);
                 } else if(result.length === 0) {
-                    res.status(404).json({ errors: {msg: "Product not found in our records."} })
+                    res.status(404).json({ errors: {msg: "Product not found in our records.", errCode: "Prod04"} })
                 } else {
 
                     const productId = result[0].product_id;
@@ -222,7 +224,7 @@ router.post('/out', verifyToken, scanValidator, (req: Request, res: Response) =>
                     const totalQty = parseInt(result[0].product_qty) - parseInt(productQty);
 
                     if(totalQty < 0) {
-                        res.status(422).json({ errors: {msg: "Desired quantity exceeds the quantity in inventory."} })
+                        res.status(422).json({ errors: {msg: "Desired quantity exceeds the quantity on inventory.", errCode: "Prod05"} })
                     } else {
                         database.query("UPDATE ?? SET product_qty = ? WHERE product_upc = ?", [process.env.DB_PRODUCTS_TABLE, totalQty, productUpc], async (err: any, result: any) => {
                             if(err) {
